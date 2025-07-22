@@ -88,11 +88,25 @@ export default function Home() {
       items: [
         { id: 'locations', label: 'Locations', icon: '📍' },
         { id: 'picking', label: 'Picking', icon: '📋' },
-        { id: 'packing', label: 'Packing', icon: '📦' },
         { id: 'shipping', label: 'Shipping', icon: '🚚' },
       ]
     },
-
+    {
+      title: 'REPORTS',
+      items: [
+        { id: 'inventory-reports', label: 'Inventory Reports', icon: '📊' },
+        { id: 'po-reports', label: 'PO Reports', icon: '📈' },
+        { id: 'warehouse-reports', label: 'Warehouse Reports', icon: '📋' },
+      ]
+    },
+    {
+      title: 'SETTINGS',
+      items: [
+        { id: 'users', label: 'Users', icon: '👥' },
+        { id: 'permissions', label: 'Permissions', icon: '🔐' },
+        { id: 'system-settings', label: 'System Settings', icon: '⚙️' },
+      ]
+    }
   ];
 
   const renderContent = () => {
@@ -180,12 +194,12 @@ export default function Home() {
       ></div>
 
       {/* Sidebar */}
-      <div className={`fixed top-0 left-0 w-64 h-full bg-black to-blue-600 text-white z-50 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+      <div className={`fixed top-0 left-0 w-64 h-full bg-gradient-to-b from-blue-800 to-blue-600 text-white z-50 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         <div className="p-6 border-b border-blue-700">
-          <h1 className="text-xl font-bold text-center">HP</h1>
-          <p className="text-sm text-blue-200 text-center mt-1">PO & WMS </p>
+          <h1 className="text-xl font-bold text-center">Head-Prints</h1>
+          <p className="text-sm text-blue-200 text-center mt-1">PO & WMS System</p>
         </div>
-          
+        
         <nav className="mt-6">
           {navSections.map((section, sectionIndex) => (
             <div key={sectionIndex} className="mb-6">
@@ -197,8 +211,8 @@ export default function Home() {
                   key={item.id}
                   className={`flex items-center px-6 py-3 text-sm cursor-pointer transition-colors border-l-4 ${
                     activeSection === item.id 
-                      ? 'border-yellow-400 text-white' 
-                      : 'border-transparent   text-blue-100'
+                      ? 'bg-blue-700 border-yellow-400 text-white' 
+                      : 'border-transparent hover:bg-blue-700 hover:border-blue-400 text-blue-100'
                   }`}
                   onClick={() => handleSectionClick(item.id)}
                 >
