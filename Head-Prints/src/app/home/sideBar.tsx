@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Inventory from '../Inventory/page';
 
 // Add type definitions at the top after imports
 interface NavItem {
@@ -155,15 +156,22 @@ export default function Home() {
             </div>
           </div>
         );
+        
       case 'inventory':
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Inventory Management</h2>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">Inventory management features coming soon...</p>
-            </div>
-          </div>
-        );
+  return (
+    <div className="p-6">
+      <iframe 
+        src="/inventory" 
+        style={{
+          width: '100%',
+          height: 'calc(100vh - 120px)',
+          border: 'none',
+          borderRadius: '8px'
+        }}
+      />
+    </div>
+  );
+
       case 'purchase-orders':
         return (
           <div className="space-y-6">
