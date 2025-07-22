@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './page.css';
 
 interface InventoryItem {
@@ -14,8 +14,15 @@ interface InventoryItem {
   location: string;
 }
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: number;
+}
+
 export default function Inventory() {
   const [showModal, setShowModal] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -27,6 +34,12 @@ export default function Inventory() {
     location: ''
   });
 
+  // Chat states
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   // Hardcoded inventory data
   const [inventory, setInventory] = useState<InventoryItem[]>([
     { id: 1, name: 'Laptop Dell XPS', category: 'Electronics', quantity: 45, unit: 'pcs', price: 1200, supplier: 'Dell Inc', location: 'A-01-01' },
@@ -37,6 +50,11 @@ export default function Inventory() {
     { id: 6, name: 'USB Cable', category: 'Electronics', quantity: 120, unit: 'pcs', price: 12, supplier: 'TechStore', location: 'A-02-01' },
     { id: 7, name: 'Notebook', category: 'Stationery', quantity: 85, unit: 'pcs', price: 8, supplier: 'PaperCorp', location: 'C-02-01' }
   ]);
+
+  // Auto-scroll to bottom of messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const getStockStatus = (quantity: number) => {
     if (quantity > 50) return { class: 'stock-high', text: 'High' };
@@ -108,8 +126,74 @@ export default function Inventory() {
     });
   };
 
+  // Chat functions
+  const sendMessage = async () => {
+    if (!inputMessage.trim()) return;
+
+    const userMessage: Message = { 
+      role: 'user', 
+      content: inputMessage,
+      timestamp: Date.now()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputMessage
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.message) {
+        const assistantMessage: Message = { 
+          role: 'assistant', 
+          content: data.message,
+          timestamp: Date.now()
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      } else {
+        throw new Error(data.error || 'No message received');
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorMessage: Message = { 
+        role: 'assistant', 
+        content: 'Sorry, I encountered an error connecting to the chat service. Please try again later.',
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const clearChat = () => {
+    setMessages([]);
+  };
+
   return (
     <div className="inventory-container">
+      {/* Header */}
       <div className="inventory-header">
         <h1 className="inventory-title">Inventory Management</h1>
         <button className="add-btn" onClick={handleAdd}>
@@ -117,6 +201,7 @@ export default function Inventory() {
         </button>
       </div>
 
+      {/* Inventory Table */}
       <div className="inventory-table">
         <table className="table">
           <thead>
@@ -173,6 +258,96 @@ export default function Inventory() {
           </tbody>
         </table>
       </div>
+
+      {/* Chat Button */}
+      <button
+        className="chat-button"
+        onClick={() => setShowChat(!showChat)}
+        title="Open AI Assistant"
+      >
+        💬
+      </button>
+
+      {/* Chat Window */}
+      {showChat && (
+        <div className="chat-window">
+          {/* Chat Header */}
+          <div className="chat-header">
+            <span className="chat-header-title">AI Assistant</span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="chat-close-btn"
+                onClick={clearChat}
+                title="Clear chat"
+                style={{ fontSize: '14px' }}
+              >
+                🗑️
+              </button>
+              <button
+                className="chat-close-btn"
+                onClick={() => setShowChat(false)}
+                title="Close chat"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="chat-messages">
+            {messages.length === 0 && (
+              <div className="chat-welcome">
+                👋 Hi! I'm your AI assistant. I can help you with:
+                <br />• Answer general questions
+                <br />• Provide information on various topics
+                <br />• Help with calculations
+                <br />• Assist with problem-solving
+                <br />• Have casual conversations
+                <br /><br />
+                Feel free to ask me anything!
+              </div>
+            )}
+            
+            {messages.map((message, index) => (
+              <div
+                key={`${message.timestamp}-${index}`}
+                className={`chat-message ${message.role}`}
+              >
+                {message.content}
+              </div>
+            ))}
+            
+            {isLoading && (
+              <div className="chat-loading">
+                Thinking...
+              </div>
+            )}
+            
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="chat-input-area">
+            <input
+              type="text"
+              className="chat-input"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask me anything..."
+              disabled={isLoading}
+              maxLength={500}
+            />
+            <button
+              className="chat-send-btn"
+              onClick={sendMessage}
+              disabled={isLoading || !inputMessage.trim()}
+            >
+              {isLoading ? '⏳' : '📤'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (
