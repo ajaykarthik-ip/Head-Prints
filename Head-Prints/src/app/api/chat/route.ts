@@ -9,8 +9,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    // Try both environment variable names
+    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
     if (!apiKey) {
+      console.error('Available env vars:', Object.keys(process.env).filter(key => key.includes('GEMINI')));
       return NextResponse.json({ error: 'Gemini API key not configured' }, { status: 500 });
     }
 
@@ -62,9 +64,9 @@ Respond naturally and conversationally.`;
       ]
     };
 
-    // Make request to Gemini API
+    // Make request to Gemini API - FIXED: Use correct model name
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -95,7 +97,7 @@ Respond naturally and conversationally.`;
       }, { status: 500 });
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: aiMessage.trim(),
       timestamp: new Date().toISOString()
     });
